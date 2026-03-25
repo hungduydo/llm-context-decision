@@ -3,7 +3,10 @@
     "context_server": {
       "type": "stdio",
       "command": "/opt/homebrew/bin/uv",
-      "args": ["run", "--directory", "server", "context-server"]
+      "args": ["run", "--directory", "server", "context-server"],
+      "env": {
+        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}"
+      }
     }
   }
 }

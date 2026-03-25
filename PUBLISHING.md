@@ -12,7 +12,7 @@ Replace placeholder values in `.claude-plugin/marketplace.json`:
 
 ```json
 "owner": {
-  "name": "YOUR_GITHUB_USERNAME",
+  "name": "hungduydo",
   "email": "your@email.com"
 }
 ```
@@ -21,8 +21,8 @@ And in `.claude-plugin/plugin.json`:
 
 ```json
 "author": {
-  "name": "YOUR_GITHUB_USERNAME",
-  "url": "https://github.com/YOUR_GITHUB_USERNAME"
+  "name": "hungduydo",
+  "url": "https://github.com/hungduydo"
 }
 ```
 
@@ -124,7 +124,7 @@ cd /Users/user/Documents/workspace/Personal/llm-context-decision
 git init
 git add .
 git commit -m "Initial release: v1.0.0"
-git remote add origin https://github.com/YOUR_USERNAME/llm-context-decision.git
+git remote add origin https://github.com/hungduydo/llm-context-decision.git
 git push -u origin main
 ```
 
@@ -159,14 +159,23 @@ This reads `.claude-plugin/marketplace.json` and submits to the marketplace regi
 
 ### 3.2 Alternative — Share Directly
 
-Users can install directly from GitHub without marketplace approval:
+Users can install directly from GitHub without marketplace approval using slash commands inside Claude Code chat:
 
-```bash
-# User installs from your GitHub repo
-claude plugins add https://github.com/YOUR_USERNAME/llm-context-decision
+```
+# Step 1: Add the GitHub repo as a marketplace
+/plugin marketplace add https://github.com/hungduydo/llm-context-decision
+
+# Step 2: Install the plugin
+/plugin install llm-context-decision@hungduydo-llm-context-decision
 ```
 
-Or manually: user clones the repo and adds it as a local plugin in their Claude Code settings.
+Or open the interactive plugin UI:
+
+```
+/plugin
+```
+
+Then navigate to **Discover → llm-context-decision → Enter to install**.
 
 ---
 

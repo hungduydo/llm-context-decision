@@ -12,6 +12,10 @@ class Classification:
     model: str  # haiku, sonnet, opus
     confidence: float
     reason: str
+    tier: str = ""  # easy, medium, hard
+    estimated_input_tokens: int = 0
+    estimated_output_tokens: int = 0
+    cost_per_model: dict[str, float] | None = None  # {model: cost_usd}
 
 
 # Keyword sets for each tier (keyword -> weight)
@@ -112,6 +116,57 @@ SCOPE_ESCALATORS = {
 }
 
 
+# Pricing per model (USD per 1M tokens)
+_PRICING = {
+    "haiku": {"input": 0.80, "output": 4.00},
+    "sonnet": {"input": 3.00, "output": 15.00},
+    "opus": {"input": 15.00, "output": 75.00},
+}
+
+
+def estimate_task_tokens(task_description: str) -> tuple[int, int]:
+    """Estimate input and output tokens for a task.
+
+    Args:
+        task_description: The task description.
+
+    Returns:
+        Tuple of (estimated_input_tokens, estimated_output_tokens).
+    """
+    # Heuristic: 1 token per ~4 characters
+    task_tokens = max(1, len(task_description) // 4)
+
+    # Add overhead for context, formatting, system prompts (~500 tokens baseline)
+    estimated_input = task_tokens + 500
+
+    # Output tokens depend on task complexity (estimated based on task length)
+    if len(task_description) < 50:
+        estimated_output = 200  # EASY
+    elif len(task_description) < 150:
+        estimated_output = 500  # MEDIUM
+    else:
+        estimated_output = 1000  # HARD
+
+    return estimated_input, estimated_output
+
+
+def estimate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
+    """Estimate USD cost for a model call.
+
+    Args:
+        model: Model tier (haiku, sonnet, opus).
+        input_tokens: Number of input tokens.
+        output_tokens: Number of output tokens.
+
+    Returns:
+        Estimated cost in USD.
+    """
+    pricing = _PRICING.get(model, _PRICING["sonnet"])
+    input_cost = (input_tokens / 1_000_000) * pricing["input"]
+    output_cost = (output_tokens / 1_000_000) * pricing["output"]
+    return round(input_cost + output_cost, 6)
+
+
 def classify_task(task: str) -> Classification:
     """Classify a task description into a Claude model tier.
 
@@ -192,10 +247,30 @@ def classify_task(task: str) -> Classification:
         top_keywords = matched_keywords[best_model][:3]
         reason = f"Matched keywords: {', '.join(top_keywords)}" if top_keywords else "Scope/complexity analysis"
 
+    # Determine tier based on best model
+    if best_model == "haiku":
+        tier = "easy"
+    elif best_model == "sonnet":
+        tier = "medium"
+    else:
+        tier = "hard"
+
+    # Estimate tokens and calculate costs
+    est_input, est_output = estimate_task_tokens(task)
+    cost_per_model = {
+        "haiku": estimate_cost("haiku", est_input, est_output),
+        "sonnet": estimate_cost("sonnet", est_input, est_output),
+        "opus": estimate_cost("opus", est_input, est_output),
+    }
+
     return Classification(
         model=best_model,
         confidence=round(confidence, 2),
         reason=reason,
+        tier=tier,
+        estimated_input_tokens=est_input,
+        estimated_output_tokens=est_output,
+        cost_per_model=cost_per_model,
     )
 
 

@@ -1,8 +1,8 @@
 {
   "name": "llm-context-decision",
   "owner": {
-    "name": "user",
-    "email": "user@example.com"
+    "name": "hungduydo",
+    "email": "hungduydo@github.com"
   },
   "metadata": {
     "description": "Optimize AI development with smart context selection and tiered Claude model routing (Haiku/Sonnet/Opus)",

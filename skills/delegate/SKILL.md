@@ -5,8 +5,9 @@ description: >
   and delegates to Haiku (simple/cheap), Sonnet (balanced), or Opus (complex/premium).
   Supports multi-turn conversations: if the delegated model asks a clarifying question,
   the loop continues on the SAME model — your answer is forwarded with full history.
+  Use --preview flag to see cost comparison without delegating.
 allowed-tools: mcp__context_server__classify_task_tool, mcp__context_server__delegate_to_model, mcp__context_server__get_relevant_files, Read
-argument-hint: "<task description>"
+argument-hint: "[--preview] <task description>"
 ---
 
 # Task Delegation (Multi-Turn)
@@ -18,11 +19,14 @@ argument-hint: "<task description>"
 
 2. **`delegate_to_model` MUST be called for every task, no exceptions.** Even if the
    task seems trivial. Even if you already know the answer. The point is routing, not solving.
+   → **Exception:** If `--preview` flag is present, skip delegation and show cost comparison only.
 
 3. **Never use Edit, Write, Bash, or any file-modification tool.** These are forbidden
    in this skill. If you find yourself about to fix something directly — STOP and delegate.
 
-4. **Never skip `classify_task_tool`.** It must always be your first action.
+4. **Never skip `classify_task_tool`.** It must always be your first action (unless preview mode).
+
+5. **If `$ARGUMENTS` starts with `--preview`, use Preview Mode (see section above).** Do not continue to Phase 1.
 
 Violating any of these rules defeats the purpose of the plugin (cost optimisation + usage tracking).
 
@@ -38,9 +42,47 @@ Violating any of these rules defeats the purpose of the plugin (cost optimisatio
 
 ---
 
+## Preview Mode (--preview flag)
+
+If `$ARGUMENTS` starts with `--preview`, **do NOT delegate**. Instead:
+
+1. Extract the task: everything after `--preview ` (strip the flag)
+2. Call `classify_task_tool` with the task
+3. Extract from the result:
+   - `model` (recommended tier)
+   - `tier` (easy/medium/hard classification)
+   - `estimated_input_tokens` and `estimated_output_tokens`
+   - `cost_per_model` (dict with haiku, sonnet, opus costs)
+4. Format and show a cost comparison table:
+
+```markdown
+## /delegate --preview "{task}"
+
+**Task:** {task} (first 60 chars if longer)
+**Classification:** {tier} (EASY/MEDIUM/HARD)
+**Estimated tokens:** {input} input, {output} output ({total} total)
+
+| Model | Cost | Best For | Note |
+|-------|------|----------|------|
+| 🔹 **Haiku** | **${cost_haiku}** | Skeleton code only | Fast, cheapest |
+| ✅ **Sonnet** | **${cost_sonnet}** | **RECOMMENDED** | Balanced cost/quality |
+| 💎 Opus | **${cost_opus}** | Guaranteed perfection | Expensive, overkill |
+
+**💡 Cost Saving Tip:** Start with **Sonnet** (${cost_sonnet}). Use **Haiku** (${cost_haiku}) if you only need a skeleton to flesh out manually.
+
+---
+**Next step:** `/delegate "{task}"` to actually route to {model}
+```
+
+Then **STOP — do not continue to Phase 1**. Preview mode completes here.
+
+---
+
 ## Phase 1 — Classify & Gather Context (you do this part)
 
-1. Take the task from `$ARGUMENTS`.
+> **Skip this phase if in Preview Mode** (--preview flag detected). If preview mode, show cost table and return.
+
+1. Take the task from `$ARGUMENTS` (strip any `--preview` flag first if present, but this step happens after preview check).
 2. Call `classify_task_tool` with the task → note the recommended `model` and `reason`.
 3. If the task mentions specific code or files, call `get_relevant_files` to find them,
    then `Read` the top 1–3 files.

@@ -20,28 +20,51 @@ A Claude Code plugin that optimizes AI-assisted development by intelligently rou
 - Incremental graph updates on file changes (via git hooks)
 - `/delegate` routes simple tasks to cheaper models automatically
 
+## Requirements
+
+- Claude Code ≥ 1.x
+- Python ≥ 3.11
+- [uv](https://docs.astral.sh/uv/) package manager (`brew install uv` on macOS)
+
+**Optional:** `ANTHROPIC_API_KEY` (only needed for `/delegate` to route tasks to cheaper models)
+
 ## Installation
 
 ### 1. Install the Plugin
 
-```bash
-cd /path/to/llm-context-decision
-claude plugins validate .
-# Should pass validation
+Run these slash commands inside Claude Code chat:
 
-# Then install (exact command depends on your Claude Code version)
-# claude plugins install ./llm-context-decision
-# or manually enable in .claude-plugin marketplace
+```
+/plugin marketplace add https://github.com/hungduydo/llm-context-decision
+/plugin install llm-context-decision@hungduydo-llm-context-decision
+```
+
+Or use the interactive UI (`/plugin` → Discover tab).
+
+To install locally from a clone:
+
+```bash
+git clone https://github.com/hungduydo/llm-context-decision
+cd llm-context-decision
+claude plugins validate .
 ```
 
 ### 2. Set Up MCP Server
 
-The plugin includes a Python MCP server that powers all context analysis.
+```bash
+cd server && uv sync
+```
+
+### 3. Fix `uv` Path (macOS Homebrew)
+
+The `.mcp.json` uses the Homebrew `uv` path by default. If your `uv` is elsewhere, run:
 
 ```bash
-cd server
-uv sync
+# Auto-detect and update .mcp.json
+sed -i '' "s|/opt/homebrew/bin/uv|$(which uv)|g" .mcp.json
 ```
+
+> On Linux: use `sed -i` (no `''`). On Windows: edit `.mcp.json` manually and set `"command"` to the output of `where uv`.
 
 The MCP server is configured in `.mcp.json` to run via `uv` when Claude Code starts.
 
@@ -94,16 +117,18 @@ User: "Add rate limiting to the auth middleware"
 → 17x token reduction
 ```
 
-### Delegate to Cheaper Models
+### Delegate to Cheaper Models (Optional)
 
 ```bash
 /delegate "format this file according to prettier"
 ```
 
-Classifies the task and routes to:
-- Haiku if simple (10x cheaper than Opus)
-- Sonnet if medium
-- Opus if complex (only when needed)
+Routes tasks to the most cost-effective Claude model:
+- **Haiku** — Simple tasks (10x cheaper than Opus)
+- **Sonnet** — Balanced tasks
+- **Opus** — Complex tasks (only when needed)
+
+> **Requires `ANTHROPIC_API_KEY`** (skip this skill if you don't have one)
 
 ## How It Works
 
@@ -231,15 +256,39 @@ dist/
 - [ ] Performance profiling recommendations
 - [ ] Security vulnerability detection
 
+## Troubleshooting
+
+**MCP server shows `✘ failed` in Claude Code**
+
+GUI apps launch with a restricted `PATH` that doesn't include Homebrew paths. Fix:
+```bash
+# Find your uv path and update .mcp.json
+sed -i '' "s|/opt/homebrew/bin/uv|$(which uv)|g" .mcp.json
+# Restart Claude Code
+```
+
+**`/delegate` runs on current model instead of routing**
+
+The skill must call `delegate_to_model` — ensure the MCP server is connected (`✔` in Claude Code's Built-in MCPs list). If it shows `✘ failed`, fix the `uv` path above first.
+
+**`/delegate` not working**
+
+`/delegate` requires `ANTHROPIC_API_KEY` to route tasks to Claude models. Set it:
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+```
+
+The other skills (`/scan`, `/map`, `/context`, `/usage`) work without it — they only analyze your local codebase.
+
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE)
 
 ## Contributing
 
-Improvements welcome. Key areas:
+Improvements welcome — [open an issue](https://github.com/hungduydo/llm-context-decision/issues) or submit a PR. Key areas:
 
-1. Add support for more languages in `parser.py`
+1. Add support for more languages in `server/src/context_server/parser.py`
 2. Enhance test detection heuristics
 3. Optimize import resolution for aliases (`tsconfig.json` paths, Python `sys.path`)
 4. Add semantic search via vector embeddings

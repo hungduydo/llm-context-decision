@@ -1,6 +1,6 @@
 [project]
 name = "context-server"
-version = "1.0.0"
+version = "1.0.1"
 description = "MCP server for codebase context optimization with Tree-sitter AST parsing and tiered Claude model routing"
 requires-python = ">=3.11"
 dependencies = [

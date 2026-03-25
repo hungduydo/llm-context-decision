@@ -1,0 +1,21 @@
+{
+  "name": "llm-context-decision",
+  "owner": {
+    "name": "user",
+    "email": "user@example.com"
+  },
+  "metadata": {
+    "description": "Optimize AI development with smart context selection and tiered Claude model routing (Haiku/Sonnet/Opus)",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "llm-context-decision",
+      "source": "./",
+      "description": "Optimize AI development with smart context selection and tiered Claude model routing (Haiku/Sonnet/Opus)",
+      "version": "1.0.0",
+      "category": "development",
+      "keywords": ["context-optimization", "multi-model", "tree-sitter", "blast-radius", "mcp", "claude-code"]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod +x /Users/user/Documents/workspace/Personal/llm-context-decision/scripts/update-graph.sh)",
+      "Bash(uv sync:*)",
+      "Bash(uv run:*)",
+      "Bash(claude plugins:*)",
+      "Bash(xargs ls:*)",
+      "Bash(python -c \"from context_server.server import *; print\\(''OK''\\)\")"
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "PostToolUse": [
+    {
+      "matcher": "Write",
+      "command": "bash scripts/update-graph.sh"
+    }
+  ]
+}
